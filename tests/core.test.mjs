@@ -1,0 +1,32 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {calculateTrade,targetPrice,simulate,calculateAverageCost,calculatePartialSale,calculateCapital,convertAmount} from "../public/modules/core.js";
+const base={qty:"10",buyPrice:"100",sellPrice:"120",buyPct:"0",sellPct:"0",buyFixed:"0",sellFixed:"0",expenses:"0"};
+const close=(actual,expected,eps=1e-7)=>assert.ok(Math.abs(actual-expected)<=eps,`${actual} no está cerca de ${expected}`);
+test("sin comisiones: beneficio 200",()=>assert.equal(calculateTrade(base).profit,200));
+test("comisión de compra aumenta coste",()=>assert.equal(calculateTrade({...base,buyPct:"2"}).profit,180));
+test("comisión de venta reduce ingreso",()=>assert.equal(calculateTrade({...base,sellPct:"2"}).profit,176));
+test("comisiones fijas y gastos se descuentan",()=>assert.equal(calculateTrade({...base,buyFixed:"3",sellFixed:"4",expenses:"5"}).profit,188));
+test("equilibrio produce beneficio cero",()=>{const d={...base,sellPrice:"100"};const r=calculateTrade(d);assert.equal(r.profit,0);assert.equal(r.breakEven,100)});
+test("precio objetivo alcanza beneficio deseado con comisiones",()=>{const d={...base,buyPct:"1.25",sellPct:"2.5",buyFixed:"1.23",sellFixed:"2.34",expenses:"4.56"};const p=targetPrice(d,"50");close(calculateTrade({...d,sellPrice:String(p)}).profit,50,1e-6)});
+test("cantidad cero se rechaza",()=>assert.throws(()=>calculateTrade({...base,qty:"0"})));
+test("comisión de venta 100% se rechaza",()=>assert.throws(()=>calculateTrade({...base,sellPct:"100"})));
+test("porcentajes negativos se rechazan",()=>assert.throws(()=>calculateTrade({...base,buyPct:"-0.1"})));
+test("valores no numéricos se rechazan",()=>assert.throws(()=>calculateTrade({...base,buyPrice:"abc"})));
+test("cantidades decimales conservan precisión",()=>{const r=calculateTrade({...base,qty:"0.12345678",buyPrice:"1.00000001",sellPrice:"1.00000002"});close(r.profit,0.0000000012345678,1e-8)});
+test("comisiones fijas superiores al ingreso pueden generar pérdida",()=>{const r=calculateTrade({...base,sellPrice:"1",sellFixed:"50"});assert.ok(r.profit<0)});
+test("ROI no disponible si coste y gastos son cero",()=>{const r=calculateTrade({...base,buyPrice:"0",sellPrice:"0"});assert.equal(r.roi,null)});
+test("simulador compone 2% durante dos ciclos",()=>assert.equal(simulate({capital:"100",rate:"2",count:"2",reinvest:"100"}).final,104.04));
+test("simulador rechaza reinversión superior a 100%",()=>assert.throws(()=>simulate({capital:"100",rate:"2",count:"2",reinvest:"101"})));
+
+
+test("coste promedio ponderado de varias compras",()=>{const r=calculateAverageCost([{qty:"2",price:"100"},{qty:"3",price:"120"}]);assert.equal(r.totalQty,5);assert.equal(r.totalCost,560);assert.equal(r.averagePrice,112)});
+test("coste promedio incluye comisiones y gastos",()=>{const r=calculateAverageCost([{qty:"2",price:"100",feePct:"10",feeFixed:"2",expenses:"3"}]);assert.equal(r.totalCost,225);assert.equal(r.averagePrice,112.5)});
+test("coste promedio rechaza cantidad cero",()=>assert.throws(()=>calculateAverageCost([{qty:"0",price:"100"}])));
+test("venta parcial calcula resultado y saldo restante",()=>{const r=calculatePartialSale({totalQty:"10",averagePrice:"100",sellQty:"4",sellPrice:"120"});assert.equal(r.realized,80);assert.equal(r.remainingQty,6);assert.equal(r.remainingCost,600)});
+test("venta parcial aplica comisión y gastos",()=>{const r=calculatePartialSale({totalQty:"10",averagePrice:"100",sellQty:"2",sellPrice:"120",sellPct:"5",sellFixed:"2",expenses:"3"});assert.equal(r.realized,23)});
+test("venta parcial no permite vender más de lo disponible",()=>assert.throws(()=>calculatePartialSale({totalQty:"2",averagePrice:"100",sellQty:"3",sellPrice:"120"})));
+test("capital disponible descuenta comprometido y reserva",()=>{const r=calculateCapital({capital:"1000",committed:"250",reserve:"150"});assert.equal(r.available,600);assert.equal(r.availablePercent,60)});
+test("capital rechaza asignaciones superiores al total",()=>assert.throws(()=>calculateCapital({capital:"100",committed:"70",reserve:"40"})));
+test("conversión manual descuenta comisión",()=>{const r=convertAmount({amount:"10",rate:"300",feePct:"2"});assert.equal(r.gross,3000);assert.equal(r.fee,60);assert.equal(r.net,2940)});
+test("conversión rechaza tasa cero",()=>assert.throws(()=>convertAmount({amount:"10",rate:"0"})));
