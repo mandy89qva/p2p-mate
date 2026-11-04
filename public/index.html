@@ -1,1 +1,178 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#101827">
+  <meta name="description" content="P2P Mate: calculadora educativa de costes, ingresos y escenarios hipotéticos.">
+  <title>P2P Mate</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script src="https://www.qvapay.com/miniapps/sdk-sim.js"></script>
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="#" aria-label="P2P Mate inicio"><span class="brand-mark">P</span><span>P2P <b>Mate</b><small>Tu dinero, tus cuentas, tus decisiones.</small></span></a>
+  <button id="themeBtn" class="icon-btn" aria-label="Cambiar tema">☼</button>
+</header>
+<main class="wrap">
+  <section class="hero">
+    <div><span class="eyebrow">HERRAMIENTA DE CÁLCULO</span><h1>Analiza tus números<br><em>con claridad.</em></h1>
+      <p>Calcula costes, comisiones y resultados usando exclusivamente las ocho opciones admitidas. Tus registros permanecen en este dispositivo.</p></div>
+    <div class="hero-chip"><span class="pulse"></span> Modo local · Sin cuenta</div>
+  </section>
+  <nav class="tabs" aria-label="Secciones">
+    <button class="tab active" data-view="calculator">Calculadora</button>
+    <button class="tab" data-view="compare">Comparador</button>
+    <button class="tab" data-view="history">Historial</button>
+    <button class="tab" data-view="stats">Estadísticas</button>
+    <button class="tab" data-view="simulator">Simulador</button>
+    <button class="tab" data-view="inventory">Inventario</button>
+    <button class="tab" data-view="capital">Capital</button>
+    <button class="tab" data-view="converter">Conversor</button>
+    <button class="tab" data-view="rates">Tasas QvaPay</button>
+  </nav>
 
+  <section id="calculator" class="view active">
+    <div class="section-head"><div><span class="eyebrow">01 / ESCENARIO</span><h2>Calculadora</h2></div><span class="muted">Introduce valores hipotéticos</span></div>
+    <div class="layout">
+      <form id="calcForm" class="panel form-grid">
+        <label>Opción de origen <select id="asset" required><option value="QUSD">QUSD</option><option value="BANK_CUP">Bank_CUP</option><option value="BANK_MLC">Bank_MLC</option><option value="CLASICA">Clásica</option><option value="ETECSA">ETECSA</option><option value="BANDECPREPAGO">BandecPrepago</option><option value="TROPIPAY">TropiPay</option><option value="ZELLE">Zelle</option></select></label>
+        <label>Opción de referencia <select id="currency" required><option value="QUSD">QUSD</option><option value="BANK_CUP">Bank_CUP</option><option value="BANK_MLC">Bank_MLC</option><option value="CLASICA">Clásica</option><option value="ETECSA">ETECSA</option><option value="BANDECPREPAGO">BandecPrepago</option><option value="TROPIPAY">TropiPay</option><option value="ZELLE">Zelle</option></select></label>
+        <label>Cantidad <input id="qty" type="number" min="0.00000001" step="any" value="100" required></label>
+        <label>Precio de compra <input id="buyPrice" type="number" min="0" step="any" value="300" required></label>
+        <label>Precio de venta <input id="sellPrice" type="number" min="0" step="any" value="315" required></label>
+        <div class="field-title">Comisiones porcentuales</div>
+        <label>Compra (%) <input id="buyPct" type="number" min="0" max="99.999999" step="any" value="0"></label>
+        <label>Venta (%) <input id="sellPct" type="number" min="0" max="99.999999" step="any" value="0"></label>
+        <div class="field-title">Comisiones fijas y gastos (moneda de referencia)</div>
+        <label>Fija de compra <input id="buyFixed" type="number" min="0" step="any" value="0"></label>
+        <label>Fija de venta <input id="sellFixed" type="number" min="0" step="any" value="0"></label>
+        <label class="full">Gastos adicionales <input id="expenses" type="number" min="0" step="any" value="0"></label>
+        <label>Tipo de registro <select id="recordType"><option value="hypothetical">Hipotético</option><option value="real">Real declarado por mí</option></select></label>
+        <label class="full">Nota (opcional) <input id="recordNote" maxlength="500" placeholder="Referencia o comentario"></label>
+        <div class="actions full"><button class="btn primary" type="submit">Calcular resultado</button><button class="btn secondary" id="saveBtn" type="button">Guardar escenario</button></div>
+        <p id="error" class="error full" role="alert"></p>
+      </form>
+      <aside class="panel result-panel">
+        <span class="eyebrow">RESULTADO ESTIMADO</span><div id="profit" class="profit">—</div><div id="status" class="status">Completa los datos</div>
+        <div class="metrics">
+          <div><span>Coste total</span><b id="cost">—</b></div>
+          <div><span>Ingreso bruto</span><b id="gross">—</b></div>
+          <div><span>Ingreso neto</span><b id="net">—</b></div>
+          <div><span>ROI</span><b id="roi">—</b></div>
+          <div><span>Precio equilibrio</span><b id="breakeven">—</b></div>
+          <div><span>Diferencia / unidad</span><b id="unitDiff">—</b></div>
+        </div>
+        <p class="hint">El resultado es una simulación matemática. No representa una cotización ni garantiza resultados.</p>
+      </aside>
+    </div>
+    <div class="panel target-panel">
+      <div><span class="eyebrow">PRECIO OBJETIVO</span><h3>¿Qué precio produciría el beneficio deseado?</h3><p class="muted">Se aplican las comisiones y gastos introducidos arriba.</p></div>
+      <label>Beneficio deseado <input id="desired" type="number" min="0" step="any" value="100"></label>
+      <div class="target-result"><span>Precio de venta objetivo</span><b id="targetPrice">—</b></div>
+    </div>
+  </section>
+
+  <section id="compare" class="view">
+    <div class="section-head"><div><span class="eyebrow">02 / ALTERNATIVAS</span><h2>Comparador</h2></div></div>
+    <div class="panel">
+      <p class="muted">Compara hasta cuatro escenarios hipotéticos para las opciones seleccionadas en la calculadora.</p>
+      <div class="compare-grid" id="compareInputs"></div>
+      <button id="compareBtn" class="btn primary">Comparar escenarios</button>
+      <div id="compareResults" class="compare-results"></div>
+    </div>
+  </section>
+
+  <section id="history" class="view">
+    <div class="section-head"><div><span class="eyebrow">03 / REGISTRO LOCAL</span><h2>Historial</h2></div><div class="inline-actions"><button id="exportBtn" class="btn secondary">Exportar CSV</button><button id="backupBtn" class="btn secondary">Copia JSON</button><label class="btn secondary file-label">Restaurar copia<input id="importFile" type="file" accept="application/json,.json" hidden></label><button id="clearBtn" class="btn danger">Borrar todo</button></div></div>
+    <div class="panel history-tools"><label>Buscar activo o moneda <input id="historySearch" type="search" placeholder="Ej. USDT, CUP"></label><label>Tipo <select id="historyType"><option value="all">Todos</option><option value="hypothetical">Hipotéticos</option><option value="real">Reales declarados</option></select></label></div>
+    <p id="storageStatus" class="hint" role="status">Preparando almacenamiento local…</p>
+    <div class="panel"><div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Tipo</th><th>Activo</th><th>Moneda</th><th>Resultado</th><th>ROI</th><th>Acciones</th></tr></thead><tbody id="historyRows"><tr><td colspan="7" class="muted">Todavía no hay registros.</td></tr></tbody></table></div></div>
+    <p class="hint">“Real declarado” significa que el usuario lo registró como real; P2P Mate no verifica operaciones ni movimientos de dinero. Los datos se guardan en este navegador/dispositivo. Exporta copias periódicas para evitar pérdidas.</p>
+  </section>
+
+  <section id="stats" class="view">
+    <div class="section-head"><div><span class="eyebrow">04 / RESUMEN</span><h2>Estadísticas</h2></div></div>
+    <div id="statsContent" class="stats-grid"></div>
+    <p class="hint">Los resultados se agrupan por moneda. No se suman importes de monedas diferentes.</p>
+  </section>
+
+  <section id="simulator" class="view">
+    <div class="section-head"><div><span class="eyebrow">05 / PROYECCIÓN</span><h2>Simulador de crecimiento</h2></div></div>
+    <div class="panel simulator">
+      <p class="muted">Explora cómo cambia un capital en una simulación matemática. La rentabilidad introducida es hipotética, no una predicción.</p>
+      <label>Capital inicial <input id="simCapital" type="number" min="0" step="any" value="1000"></label>
+      <label>Variación hipotética por ciclo (%) <input id="simRate" type="number" min="-99.99" max="1000" step="any" value="2"></label>
+      <label>Número de ciclos <input id="simCount" type="number" min="0" max="500" step="1" value="12"></label>
+      <label>Porcentaje del resultado reinvertido (%) <input id="simReinvest" type="number" min="0" max="100" step="any" value="100"></label>
+      <button id="simBtn" class="btn primary">Simular</button>
+      <div id="simResult" class="sim-result">Introduce los valores para ver la proyección.</div>
+    </div>
+  </section>
+
+  <section id="inventory" class="view">
+    <div class="section-head"><div><span class="eyebrow">06 / COSTE PROMEDIO</span><h2>Inventario de compras</h2></div></div>
+    <div class="panel">
+      <p class="muted">Registra varias compras del mismo activo. Cada compra puede tener comisión y gastos propios. Usa siempre la misma moneda de referencia.</p>
+      <label>Opción del inventario <select id="invAsset"><option value="QUSD">QUSD</option><option value="BANK_CUP">Bank_CUP</option><option value="BANK_MLC">Bank_MLC</option><option value="CLASICA">Clásica</option><option value="ETECSA">ETECSA</option><option value="BANDECPREPAGO">BandecPrepago</option><option value="TROPIPAY">TropiPay</option><option value="ZELLE">Zelle</option></select></label>
+      <label>Opción de referencia <select id="invCurrency"><option value="QUSD">QUSD</option><option value="BANK_CUP">Bank_CUP</option><option value="BANK_MLC">Bank_MLC</option><option value="CLASICA">Clásica</option><option value="ETECSA">ETECSA</option><option value="BANDECPREPAGO">BandecPrepago</option><option value="TROPIPAY">TropiPay</option><option value="ZELLE">Zelle</option></select></label>
+      <div id="purchaseRows" class="purchase-rows"></div>
+      <div class="inline-actions"><button id="addPurchaseBtn" class="btn secondary" type="button">Añadir compra</button><button id="avgBtn" class="btn primary" type="button">Calcular coste promedio</button></div>
+      <div id="avgResult" class="sim-result">Añade tus compras para calcular el coste promedio.</div>
+    </div>
+    <div class="panel">
+      <h3>Simular venta parcial</h3>
+      <p class="muted">Calcula el resultado de vender una parte del inventario usando el coste promedio anterior.</p>
+      <div class="form-grid">
+        <label>Cantidad a vender <input id="partialQty" type="number" min="0" step="any" value="1"></label>
+        <label>Precio de venta por unidad <input id="partialPrice" type="number" min="0" step="any" value="0"></label>
+        <label>Comisión de venta (%) <input id="partialPct" type="number" min="0" max="99.999999" step="any" value="0"></label>
+        <label>Comisión fija <input id="partialFixed" type="number" min="0" step="any" value="0"></label>
+        <label class="full">Gastos adicionales <input id="partialExpenses" type="number" min="0" step="any" value="0"></label>
+      </div>
+      <button id="partialBtn" class="btn primary" type="button">Calcular venta parcial</button>
+      <div id="partialResult" class="sim-result">Primero calcula el coste promedio.</div>
+    </div>
+  </section>
+
+  <section id="capital" class="view">
+    <div class="section-head"><div><span class="eyebrow">07 / DISPONIBILIDAD</span><h2>Capital disponible</h2></div></div>
+    <div class="panel simulator">
+      <p class="muted">Organiza un presupuesto de referencia. No se conecta a cuentas ni comprueba saldos.</p>
+      <label>Opción <select id="capCurrency"><option value="QUSD">QUSD</option><option value="BANK_CUP">Bank_CUP</option><option value="BANK_MLC">Bank_MLC</option><option value="CLASICA">Clásica</option><option value="ETECSA">ETECSA</option><option value="BANDECPREPAGO">BandecPrepago</option><option value="TROPIPAY">TropiPay</option><option value="ZELLE">Zelle</option></select></label>
+      <label>Capital total <input id="capTotal" type="number" min="0" step="any" value="10000"></label>
+      <label>Capital comprometido <input id="capCommitted" type="number" min="0" step="any" value="2500"></label>
+      <label>Reserva que no deseas utilizar <input id="capReserve" type="number" min="0" step="any" value="1000"></label>
+      <button id="capitalBtn" class="btn primary" type="button">Calcular disponibilidad</button>
+      <div id="capitalResult" class="sim-result">Introduce tus valores para calcular el capital disponible.</div>
+    </div>
+  </section>
+
+  <section id="converter" class="view">
+    <div class="section-head"><div><span class="eyebrow">08 / CONVERSIÓN MANUAL</span><h2>Conversor de monedas</h2></div></div>
+    <div class="panel simulator">
+      <p class="muted">Introduce manualmente la tasa: cuántas unidades de la moneda destino recibes por una unidad de la moneda origen. No se consulta una cotización en vivo.</p>
+      <label>Opción origen <select id="convFrom"><option value="QUSD">QUSD</option><option value="BANK_CUP">Bank_CUP</option><option value="BANK_MLC">Bank_MLC</option><option value="CLASICA">Clásica</option><option value="ETECSA">ETECSA</option><option value="BANDECPREPAGO">BandecPrepago</option><option value="TROPIPAY">TropiPay</option><option value="ZELLE">Zelle</option></select></label>
+      <label>Opción destino <select id="convTo"><option value="QUSD">QUSD</option><option value="BANK_CUP">Bank_CUP</option><option value="BANK_MLC">Bank_MLC</option><option value="CLASICA">Clásica</option><option value="ETECSA">ETECSA</option><option value="BANDECPREPAGO">BandecPrepago</option><option value="TROPIPAY">TropiPay</option><option value="ZELLE">Zelle</option></select></label>
+      <label>Cantidad origen <input id="convAmount" type="number" min="0" step="any" value="10"></label>
+      <label>Tasa manual <input id="convRate" type="number" min="0.00000001" step="any" value="300"></label>
+      <label>Comisión (%) <input id="convFee" type="number" min="0" max="99.999999" step="any" value="0"></label>
+      <button id="convertBtn" class="btn primary" type="button">Convertir</button>
+      <div id="convertResult" class="sim-result">Introduce una tasa manual para realizar la conversión.</div>
+    </div>
+  </section>
+
+  <section id="rates" class="view">
+    <div class="section-head"><div><span class="eyebrow">09 / REFERENCIA PÚBLICA</span><h2>Tasas P2P de QvaPay</h2></div><button id="refreshRatesBtn" class="btn primary" type="button">Actualizar tasas</button></div>
+    <div class="panel rates-panel">
+      <div class="rates-meta"><span id="ratesStatus" role="status">Esperando consulta…</span><span id="ratesUpdated" class="muted">Sin datos cargados</span></div>
+      <p class="muted">Promedios de operaciones P2P completadas publicados por QvaPay (ratio receive/amount). No son ofertas disponibles ni garantizan que puedas operar a esa tasa. La ventana estadística puede ser de 24, 72 o 168 horas según el volumen de operaciones.</p>
+      <div class="table-wrap"><table><thead><tr><th>Moneda</th><th>Promedio</th><th>Compra</th><th>Venta</th><th>Muestras</th><th>Ventana</th></tr></thead><tbody id="ratesRows"><tr><td colspan="6" class="muted">Pulsa «Actualizar tasas» para consultar el endpoint público.</td></tr></tbody></table></div>
+      <p class="hint">Fuente: API pública de QvaPay · GET /p2p/averages. Si la conexión falla, usa el conversor manual. La fecha y el número de muestras se muestran cuando la API los proporciona.</p>
+    </div>
+  </section>
+
+</main>
+<footer><b>P2P Mate</b> · Versión 0.7.0 · Cálculos locales · <span>Solo con fines educativos</span></footer>
+<script type="module" src="./app.js"></script>
+</body></html>
